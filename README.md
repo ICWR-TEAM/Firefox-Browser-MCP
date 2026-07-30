@@ -14,7 +14,7 @@ firefox-extension/  Firefox WebExtension (companion)
 ## Architecture
 
 ```
- MCP client ──stdio──►  mcp-server  ──ws://127.0.0.1:9010──►  firefox-extension ──► all tabs
+ MCP client ──stdio──►  mcp-server  ──ws://127.0.0.1:9010 (configurable)──►  firefox-extension ──► all tabs
 ```
 
 - **`mcp-server/`** exposes browser tools over MCP (stdio) and hosts a local
@@ -26,11 +26,12 @@ firefox-extension/  Firefox WebExtension (companion)
 
 1. **Run the server** (opens the bridge on `ws://127.0.0.1:9010`):
    ```bash
-   uvx firefox-browser-mcp
+   uvx firefox-browser-mcp                 # default host/port
+   uvx firefox-browser-mcp --port 9222     # custom port
    ```
    Or run straight from source without installing:
    ```bash
-   uvx --from ./mcp-server firefox-browser-mcp
+   uvx --from ./mcp-server firefox-browser-mcp --port 9222
    ```
 2. **Load the extension** via `about:debugging#/runtime/this-firefox` →
    *Load Temporary Add-on…* → pick `firefox-extension/manifest.json`. Use the
@@ -41,13 +42,34 @@ firefox-extension/  Firefox WebExtension (companion)
      "mcpServers": {
        "firefox-browser": {
          "command": "uvx",
-         "args": ["firefox-browser-mcp"]
+         "args": ["firefox-browser-mcp", "--host", "127.0.0.1", "--port", "9010"]
        }
      }
    }
    ```
 
 See `mcp-server/README.md` and `firefox-extension/README.md` for details.
+
+## Server CLI options
+
+Connection settings can be passed as CLI args (they override the `FBMCP_*`
+environment variables):
+
+```bash
+uvx firefox-browser-mcp --host 127.0.0.1 --port 9010 --log-level INFO
+uvx firefox-browser-mcp --version
+uvx firefox-browser-mcp --help
+```
+
+| Flag          | Default     | Env fallback      | Description                    |
+| ------------- | ----------- | ----------------- | ------------------------------ |
+| `--host`      | `127.0.0.1` | `FBMCP_HOST`      | WebSocket bridge host to bind  |
+| `--port`      | `9010`      | `FBMCP_PORT`      | WebSocket bridge port to bind  |
+| `--log-level` | `INFO`      | `FBMCP_LOG_LEVEL` | Python logging level           |
+
+> If you change the port, set the same value in the extension popup's
+> **Bridge WebSocket URL** (e.g. `ws://127.0.0.1:9222`) so it connects to the
+> right bridge, then toggle **Enable** / click **Reconnect**.
 
 ## What it can do
 
