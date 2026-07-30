@@ -80,20 +80,33 @@ function connect() {
   ) {
     return;
   }
+  console.log("[MCP Bridge] connecting to", wsUrl);
   try {
     socket = new WebSocket(wsUrl);
   } catch (e) {
+    console.warn("[MCP Bridge] failed to create WebSocket:", e);
     scheduleReconnect();
     return;
   }
 
-  socket.onopen = () => setConnected(true);
-  socket.onclose = () => {
+  socket.onopen = () => {
+    console.log("[MCP Bridge] connected to", wsUrl);
+    setConnected(true);
+  };
+  socket.onclose = (ev) => {
+    console.warn(
+      "[MCP Bridge] disconnected (code " + ev.code + ")." +
+        (enabled ? " Retrying in 2s…" : "")
+    );
     setConnected(false);
     socket = null;
     if (enabled) scheduleReconnect();
   };
   socket.onerror = () => {
+    console.warn(
+      "[MCP Bridge] connection error to " + wsUrl +
+        " — is the server running? (uvx firefox-browser-mcp)"
+    );
     try {
       socket.close();
     } catch (e) {
