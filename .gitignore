@@ -1,0 +1,29 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.eggs/
+build/
+dist/
+.venv/
+venv/
+.env
+
+# uv
+.uv/
+
+# Node / web-ext
+node_modules/
+package-lock.json
+firefox-extension/web-ext-artifacts/
+
+# OS / editor
+.DS_Store
+*.swp
+.idea/
+.vscode/
+
+# Secrets — never commit tokens/credentials
+*.token
+.pypirc
+secrets*

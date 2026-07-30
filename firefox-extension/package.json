@@ -1,0 +1,16 @@
+{
+  "name": "firefox-browser-mcp-extension",
+  "version": "0.2.2",
+  "private": true,
+  "description": "Companion Firefox WebExtension for the firefox-browser-mcp server.",
+  "scripts": {
+    "lint": "web-ext lint",
+    "build": "web-ext build",
+    "start": "web-ext run",
+    "sign:unlisted": "web-ext sign --channel=unlisted",
+    "sign:listed": "web-ext sign --channel=listed"
+  },
+  "devDependencies": {
+    "web-ext": "^8.3.0"
+  }
+}

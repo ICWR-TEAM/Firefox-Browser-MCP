@@ -1,0 +1,40 @@
+[project]
+name = "firefox-browser-mcp"
+version = "0.1.0"
+description = "MCP server that controls Firefox through a companion WebExtension over a WebSocket bridge."
+readme = "README.md"
+requires-python = ">=3.10"
+license = { text = "MIT" }
+authors = [{ name = "ICWR-TEAM" }]
+keywords = ["mcp", "firefox", "browser", "automation", "llm", "model-context-protocol"]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: OS Independent",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Topic :: Software Development :: Testing",
+    "Topic :: Internet :: WWW/HTTP :: Browsers",
+]
+dependencies = [
+    "mcp>=1.2.0",
+    "websockets>=12.0",
+]
+
+[project.urls]
+Homepage = "https://github.com/ICWR-TEAM/Firefox-Browser-MCP"
+Repository = "https://github.com/ICWR-TEAM/Firefox-Browser-MCP"
+Issues = "https://github.com/ICWR-TEAM/Firefox-Browser-MCP/issues"
+
+[project.scripts]
+firefox-browser-mcp = "firefox_browser_mcp.server:main"
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/firefox_browser_mcp"]
