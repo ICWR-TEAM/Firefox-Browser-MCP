@@ -27,3 +27,6 @@ firefox-extension/web-ext-artifacts/
 *.token
 .pypirc
 secrets*
+
+# web-ext sign metadata
+firefox-extension/.amo-upload-uuid
