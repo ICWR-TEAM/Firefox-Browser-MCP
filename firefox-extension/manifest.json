@@ -1,7 +1,7 @@
 {
   "manifest_version": 2,
   "name": "Browser MCP Bridge",
-  "version": "0.2.3",
+  "version": "0.2.4",
   "description": "Companion extension for the Browser MCP server: lets an MCP client control every tab (DOM, selectors, network, typing & clicking).",
   "browser_specific_settings": {
     "gecko": {

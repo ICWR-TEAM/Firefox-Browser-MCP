@@ -80,6 +80,13 @@ The `webRequest` API records requests per tab. For `xmlhttprequest` (fetch/XHR)
 it also captures **response bodies** using Firefox's `filterResponseData`
 (requires the `webRequestBlocking` permission). Bodies over 512 KB are skipped.
 
+## Enable / Disable
+
+The popup has an **Enable/Disable** toggle. When disabled, the extension closes
+the connection and stops auto-reconnecting; when enabled, it connects to the
+bridge (default `ws://127.0.0.1:9010`) and keeps retrying until the server is
+up. The state is remembered across restarts.
+
 ## Configuration
 
 Use the popup to change the **Bridge WebSocket URL** (must match `FBMCP_HOST` /

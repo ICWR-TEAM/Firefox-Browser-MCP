@@ -33,8 +33,8 @@ firefox-extension/  Firefox WebExtension (companion)
    uvx --from ./mcp-server firefox-browser-mcp
    ```
 2. **Load the extension** via `about:debugging#/runtime/this-firefox` →
-   *Load Temporary Add-on…* → pick `firefox-extension/manifest.json`. The popup
-   should show **Connected**.
+   *Load Temporary Add-on…* → pick `firefox-extension/manifest.json`. Use the
+   popup's **Enable/Disable** toggle; it should show **Connected**.
 3. **Point your MCP client** at the server:
    ```json
    {

@@ -21,6 +21,7 @@ from typing import Any, AsyncIterator, Optional, Union
 
 from mcp.server.fastmcp import FastMCP, Image
 
+from . import __version__
 from .bridge import BrowserBridge
 
 logging.basicConfig(level=os.environ.get("FBMCP_LOG_LEVEL", "INFO"))
@@ -85,11 +86,12 @@ def _fmt_tabs(tabs: list[dict]) -> str:
 @mcp.tool()
 async def browser_status() -> str:
     """Report whether the Firefox extension is currently connected to the bridge."""
+    url = f"ws://{bridge.host}:{bridge.port}"
     if bridge.connected:
-        return f"Connected. Bridge listening on ws://{HOST}:{PORT}."
+        return f"Connected. Bridge listening on {url}."
     return (
-        "Not connected. Install/enable the 'Firefox Browser MCP' extension in "
-        f"Firefox and make sure it can reach ws://{HOST}:{PORT}."
+        "Not connected. Enable the 'Browser MCP Bridge' extension in Firefox "
+        f"(popup toggle) and make sure it can reach {url}."
     )
 
 
@@ -405,7 +407,49 @@ async def browser_wait(seconds: float = 1.0) -> str:
 
 
 def main() -> None:
-    """Console-script entry point (stdio transport)."""
+    """Console-script entry point (stdio transport).
+
+    Connection settings can be provided via CLI args (which take precedence) or
+    the FBMCP_* environment variables. The Firefox extension connects to this
+    bridge; use the extension popup toggle to enable/disable it.
+    """
+    import argparse
+
+    parser = argparse.ArgumentParser(
+        prog="firefox-browser-mcp",
+        description=(
+            "MCP server that controls Firefox via a companion WebExtension "
+            "over a local WebSocket bridge."
+        ),
+    )
+    parser.add_argument(
+        "--host",
+        default=os.environ.get("FBMCP_HOST", "127.0.0.1"),
+        help="WebSocket bridge host to bind (default: 127.0.0.1 or $FBMCP_HOST).",
+    )
+    parser.add_argument(
+        "--port",
+        type=int,
+        default=int(os.environ.get("FBMCP_PORT", "9010")),
+        help="WebSocket bridge port to bind (default: 9010 or $FBMCP_PORT).",
+    )
+    parser.add_argument(
+        "--log-level",
+        default=os.environ.get("FBMCP_LOG_LEVEL", "INFO"),
+        help="Python logging level (default: INFO or $FBMCP_LOG_LEVEL).",
+    )
+    parser.add_argument(
+        "--version",
+        action="version",
+        version=f"%(prog)s {__version__}",
+    )
+    args = parser.parse_args()
+
+    logging.getLogger().setLevel(args.log_level)
+    bridge.host = args.host
+    bridge.port = args.port
+    logger.info("Starting bridge on ws://%s:%s", bridge.host, bridge.port)
+
     mcp.run()
 
 

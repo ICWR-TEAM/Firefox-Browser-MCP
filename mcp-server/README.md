@@ -20,6 +20,26 @@ uvx --from ./mcp-server firefox-browser-mcp
 
 Once published to PyPI: `uvx firefox-browser-mcp`.
 
+## CLI options
+
+Connection settings can be passed as arguments (they override the `FBMCP_*`
+env vars):
+
+```bash
+uvx firefox-browser-mcp --host 127.0.0.1 --port 9010 --log-level INFO
+uvx firefox-browser-mcp --version
+uvx firefox-browser-mcp --help
+```
+
+| Flag          | Default     | Env fallback      |
+| ------------- | ----------- | ----------------- |
+| `--host`      | `127.0.0.1` | `FBMCP_HOST`      |
+| `--port`      | `9010`      | `FBMCP_PORT`      |
+| `--log-level` | `INFO`      | `FBMCP_LOG_LEVEL` |
+
+The Firefox extension connects to this bridge; use the extension popup's
+**Enable/Disable** toggle to turn the connection on or off.
+
 ## Configure your MCP client
 
 ```json

@@ -12,13 +12,15 @@ let socket = null;
 let reconnectTimer = null;
 let connected = false;
 let wsUrl = DEFAULT_WS_URL;
+let enabled = true;
 
 /* ============================== connection ============================= */
 
 async function loadConfig() {
   try {
-    const { wsUrl: saved } = await browser.storage.local.get("wsUrl");
-    if (saved) wsUrl = saved;
+    const cfg = await browser.storage.local.get(["wsUrl", "enabled"]);
+    if (cfg.wsUrl) wsUrl = cfg.wsUrl;
+    enabled = cfg.enabled !== false; // default: enabled
   } catch (e) {
     /* ignore */
   }
@@ -38,14 +40,46 @@ function setConnected(state) {
 }
 
 function scheduleReconnect() {
-  if (reconnectTimer) return;
+  if (!enabled || reconnectTimer) return;
   reconnectTimer = setTimeout(() => {
     reconnectTimer = null;
     connect();
   }, 2000);
 }
 
+function disconnect() {
+  if (reconnectTimer) {
+    clearTimeout(reconnectTimer);
+    reconnectTimer = null;
+  }
+  if (socket) {
+    try {
+      socket.onclose = null;
+      socket.close();
+    } catch (e) {
+      /* ignore */
+    }
+    socket = null;
+  }
+  setConnected(false);
+}
+
+async function setEnabled(state) {
+  enabled = !!state;
+  await browser.storage.local.set({ enabled }).catch(() => {});
+  if (enabled) connect();
+  else disconnect();
+}
+
 function connect() {
+  if (!enabled) return;
+  if (
+    socket &&
+    (socket.readyState === WebSocket.OPEN ||
+      socket.readyState === WebSocket.CONNECTING)
+  ) {
+    return;
+  }
   try {
     socket = new WebSocket(wsUrl);
   } catch (e) {
@@ -57,7 +91,7 @@ function connect() {
   socket.onclose = () => {
     setConnected(false);
     socket = null;
-    scheduleReconnect();
+    if (enabled) scheduleReconnect();
   };
   socket.onerror = () => {
     try {
@@ -454,31 +488,29 @@ async function handleCommand(command, params) {
 browser.runtime.onMessage.addListener((msg) => {
   if (!msg || !msg.__popup) return undefined;
   if (msg.type === "getStatus") {
-    return Promise.resolve({ connected, wsUrl });
+    return Promise.resolve({ connected, wsUrl, enabled });
+  }
+  if (msg.type === "setEnabled") {
+    return setEnabled(msg.enabled).then(() => ({ ok: true, enabled }));
   }
   if (msg.type === "setUrl") {
     wsUrl = msg.url || DEFAULT_WS_URL;
     return browser.storage.local.set({ wsUrl }).then(() => {
-      try {
-        if (socket) socket.close();
-      } catch (e) {
-        /* ignore */
-      }
-      connect();
+      disconnect();
+      if (enabled) connect();
       return { ok: true };
     });
   }
   if (msg.type === "reconnect") {
-    try {
-      if (socket) socket.close();
-    } catch (e) {
-      /* ignore */
-    }
-    connect();
+    disconnect();
+    if (enabled) connect();
     return Promise.resolve({ ok: true });
   }
   return undefined;
 });
 
 /* boot */
-loadConfig().then(connect);
+loadConfig().then(() => {
+  if (enabled) connect();
+  else setConnected(false);
+});
