@@ -21,7 +21,7 @@ It consists of two independent, separately-versioned components:
   (version 0.1.0, **published on PyPI as `firefox-browser-mcp`**) that exposes
   browser tools over stdio and hosts a local WebSocket bridge. Runnable via
   `uvx firefox-browser-mcp`.
-- `firefox-extension/` — a Firefox WebExtension (Manifest V2, version 0.2.2, add-on display name "Browser MCP Bridge")
+- `firefox-extension/` — a Firefox WebExtension (Manifest V2, version 0.2.3, add-on display name "Browser MCP Bridge")
   that connects to the bridge as a WebSocket client and performs real browser
   actions on any tab.
 
@@ -202,7 +202,7 @@ Decision: Rename the extension's manifest `name` (and toolbar title) from
 manifest description too. Keep the project/repo name and PyPI package name
 (`firefox-browser-mcp`) unchanged.
 Reason: AMO rejects add-on names containing the "Firefox"/"Mozilla" trademarks.
-Impact: The AMO-submitted package is `browser_mcp_bridge-0.2.2.zip`; the add-on
+Impact: The AMO-submitted package is `browser_mcp_bridge-0.2.3.zip`; the add-on
 id (`firefox-browser-mcp@incrustwerush.org`) is unchanged. Repo, docs, and PyPI naming
 are unaffected.
 
@@ -213,14 +213,14 @@ are unaffected.
   pass; manifest is valid).
 - Server v0.1.0 **published on PyPI** (`uvx firefox-browser-mcp` works). 24
   `browser_*` tools in `server.py`, bridge in `bridge.py`.
-- Extension (v0.2.2): full command router, tab resolution across all windows,
+- Extension (v0.2.3): full command router, tab resolution across all windows,
   DOM interaction, CSS-selector queries, JS eval, per-tab network capture with
   response bodies, console capture, and a popup showing connection status +
   configurable bridge URL.
 - Git history initialized and pushed to GitHub (ICWR-TEAM/Firefox-Browser-MCP).
 - Extension packaging ready for AMO: `web-ext lint` passes (0 errors, 3 warnings),
   `web-ext lint` passes with 0 errors / 0 warnings; `web-ext build` produces
-  `firefox-extension/web-ext-artifacts/browser_mcp_bridge-0.2.2.zip`. Not yet
+  `firefox-extension/web-ext-artifacts/browser_mcp_bridge-0.2.3.zip`. Not yet
   submitted/signed on AMO.
 - Not yet: automated tests/CI, AMO submission/signing, extension icons,
   end-to-end runtime test against a live browser.
