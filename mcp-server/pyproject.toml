@@ -1,6 +1,6 @@
 [project]
 name = "firefox-browser-mcp"
-version = "0.1.1"
+version = "0.2.0"
 description = "MCP server that controls Firefox through a companion WebExtension over a WebSocket bridge."
 readme = "README.md"
 requires-python = ">=3.10"

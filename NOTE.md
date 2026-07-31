@@ -3,9 +3,9 @@
 ---
 
 Project Start Date: 2026-07-30 (first working files; git history initialized 2026-07-30)
-Last Update Project: 2026-07-30
+Last Update Project: 2026-07-31
 Project Phase: Initial development — first release published
-Project Status: mcp-server published to PyPI (v0.1.0); not yet formally tested end-to-end against a live browser
+Project Status: mcp-server published to PyPI (v0.2.0, adds SSE/streamable-http always-on transports); not yet formally tested end-to-end against a live browser
 
 ---
 
@@ -18,9 +18,9 @@ its network/API traffic.
 It consists of two independent, separately-versioned components:
 
 - `mcp-server/` — a Python [MCP](https://modelcontextprotocol.io) server
-  (version 0.1.1, **published on PyPI as `firefox-browser-mcp`**) that exposes
-  browser tools over stdio and hosts a local WebSocket bridge. Runnable via
-  `uvx firefox-browser-mcp`.
+  (version 0.2.0, **published on PyPI as `firefox-browser-mcp`**) that exposes
+  browser tools over stdio (or an always-on SSE/streamable-http endpoint) and
+  hosts a local WebSocket bridge. Runnable via `uvx firefox-browser-mcp`.
 - `firefox-extension/` — a Firefox WebExtension (Manifest V2, version 0.2.5, add-on display name "Browser MCP Bridge")
   that connects to the bridge as a WebSocket client and performs real browser
   actions on any tab.
@@ -67,10 +67,10 @@ same host). Out of scope for now: multi-browser, remote/hosted control, signing
 - **Programming language:** Python (server, `>=3.10`) and JavaScript (extension,
   browser WebExtension APIs, no build step).
 - **Framework / libraries:**
-  - Server: `mcp` SDK's `FastMCP` (stdio transport, pinned `mcp<2` since 2.0 removed the
-    bundled FastMCP), `websockets>=12.0` for the
-    bridge. Build backend: `hatchling`. Deps declared in
-    `mcp-server/pyproject.toml`.
+  - Server: `mcp` SDK's `FastMCP` (stdio, plus optional `sse`/`streamable-http`
+    HTTP transports via bundled `uvicorn`/`starlette`; pinned `mcp<2` since 2.0
+    removed the bundled FastMCP), `websockets>=12.0` for the bridge. Build
+    backend: `hatchling`. Deps declared in `mcp-server/pyproject.toml`.
   - Extension: vanilla WebExtension APIs (`browser.*`), Manifest V2, persistent
     background page. No frameworks/bundler.
 - **Infrastructure:** none/local. A localhost WebSocket bridge on
@@ -219,14 +219,34 @@ Impact: `uvx firefox-browser-mcp --port ... ` works; popup toggle controls
 connect/disconnect (no reconnect while disabled). Published PyPI 0.1.1 fixes the
 0.1.0 runtime import break.
 
+Date: 2026-07-31
+Decision: Add an always-on HTTP transport option to the server: `--transport`
+`stdio` (default) | `sse` | `streamable-http`, plus `--http-host`/`--http-port`.
+For the HTTP transports, bind the WebSocket bridge to the HTTP app\'s lifespan
+(not the per-session MCP lifespan) and make `bridge.start()/stop()`
+reference-counted/idempotent. Server -> v0.2.0.
+Reason: With stdio the client spawns the server per session, so the bridge (and
+the extension connection) only lives during a session — the user wanted the
+browser connection to stay available. Running once over SSE/streamable-http and
+tying the bridge to the HTTP server keeps it up across sessions; the extension
+connects immediately and stays connected.
+Impact: `uvx firefox-browser-mcp --transport sse` exposes `http://host:port/sse`
+(`/mcp` for streamable-http) while the bridge stays on `ws://host:9010`. Clients
+configure a URL instead of a command (stdio-only clients can use an `mcp-remote`
+shim). Verified: bridge listens at startup before any client connects, a WS
+client connects immediately, and streamable-http `initialize` returns a valid
+MCP response. Published PyPI 0.2.0.
+
 ## Current State
 
 - Feature-complete MVP for both components; builds and syntax-checks pass
   (`uv build` succeeds; `twine check` PASSED; `py_compile` and `node --check`
   pass; manifest is valid).
-- Server v0.1.1 **published on PyPI** (`uvx firefox-browser-mcp` works; CLI
-  args `--host/--port/--log-level/--version`; `mcp<2` pin). 24
-  `browser_*` tools in `server.py`, bridge in `bridge.py`.
+- Server v0.2.0 **published on PyPI** (`uvx firefox-browser-mcp` works; CLI
+  args `--transport/--host/--port/--http-host/--http-port/--log-level/--version`;
+  `mcp<2` pin). stdio + always-on `sse`/`streamable-http` transports (bridge tied
+  to the HTTP app lifespan; reference-counted start/stop). 24 `browser_*` tools
+  in `server.py`, bridge in `bridge.py`.
 - Extension (v0.2.5): full command router, tab resolution across all windows,
   DOM interaction, CSS-selector queries, JS eval, per-tab network capture with
   response bodies, console capture, and a popup showing connection status +
@@ -245,7 +265,9 @@ Issue: No end-to-end runtime test performed (server ⇄ live Firefox extension).
 Priority: High
 Status: Open
 Possible Solution: Load the temp add-on, run the server, exercise each tool group
-manually or add an integration harness.
+manually or add an integration harness. (Note: SSE/streamable-http paths were
+smoke-tested — bridge-at-startup, WS connect, and streamable-http `initialize` —
+but not yet against the live extension.)
 
 Issue: `browser_eval` runs arbitrary JS in the page with no gating (now executed
 in the page's main world via injected <script>; may be blocked by strict CSP).
@@ -269,4 +291,4 @@ Possible Solution: Add icons and sign/publish via AMO for a permanent install.
 ## Changelog Reference
 
 Daily history lives under `docs/changelog/[yyyy]/[mm]/[dd].md`.
-Latest: `docs/changelog/2026/07/30.md` (docs bootstrapped; PyPI publish; GitHub push; AMO packaging tooling; lint warnings fixed; add-on renamed for AMO).
+Latest: `docs/changelog/2026/07/31.md` (SSE/streamable-http always-on transport; bridge tied to HTTP app lifespan; reference-counted bridge; server v0.2.0 published).

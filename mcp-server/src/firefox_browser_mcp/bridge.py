@@ -28,8 +28,20 @@ class BrowserBridge:
         self._ws: Optional[WebSocketServerProtocol] = None
         self._pending: Dict[str, asyncio.Future] = {}
         self._server: Optional[websockets.server.Serve] = None
+        # Reference count so start()/stop() can be called from several nested
+        # lifespans (e.g. the always-on HTTP app lifespan plus each per-session
+        # MCP lifespan) without rebinding or prematurely tearing down the port.
+        self._refcount = 0
 
     async def start(self) -> None:
+        """Start the WebSocket server (idempotent / reference-counted).
+
+        Safe to call multiple times: the underlying server is bound only once;
+        additional calls just increase the reference count.
+        """
+        self._refcount += 1
+        if self._server is not None:
+            return
         self._server = await websockets.serve(
             self._handler,
             self.host,
@@ -41,6 +53,11 @@ class BrowserBridge:
         logger.info("Bridge listening on ws://%s:%s", self.host, self.port)
 
     async def stop(self) -> None:
+        """Stop the WebSocket server once the last holder releases it."""
+        if self._refcount > 0:
+            self._refcount -= 1
+        if self._refcount > 0:
+            return
         if self._server is not None:
             self._server.close()
             await self._server.wait_closed()

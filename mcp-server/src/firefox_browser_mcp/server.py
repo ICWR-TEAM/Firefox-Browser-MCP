@@ -406,12 +406,74 @@ async def browser_wait(seconds: float = 1.0) -> str:
     return f"Waited {seconds}s."
 
 
+def _run_http(transport: str, host: str, port: int) -> None:
+    """Run the MCP server over an always-on HTTP transport (sse/streamable-http).
+
+    Unlike stdio (spawned per client session), this binds the WebSocket bridge
+    to the HTTP app\'s lifespan, so the bridge comes up as soon as the server
+    process starts (the Firefox extension can connect immediately) and stays up
+    across MCP client sessions.
+    """
+    import asyncio
+    from contextlib import asynccontextmanager
+
+    import uvicorn
+
+    mcp.settings.host = host
+    mcp.settings.port = port
+
+    if transport == "sse":
+        app = mcp.sse_app()
+        endpoint = "/sse"
+    else:
+        app = mcp.streamable_http_app()
+        endpoint = "/mcp"
+
+    # Wrap whatever lifespan the app already declares so the bridge starts/stops
+    # with the HTTP server process rather than only per client session. The
+    # bridge start()/stop() calls are reference-counted, so the extra per-session
+    # MCP lifespan calls are harmless no-ops.
+    inner_lifespan = app.router.lifespan_context
+
+    @asynccontextmanager
+    async def lifespan_with_bridge(app_):
+        await bridge.start()
+        try:
+            async with inner_lifespan(app_):
+                yield
+        finally:
+            await bridge.stop()
+
+    app.router.lifespan_context = lifespan_with_bridge
+
+    logger.info(
+        "MCP %s endpoint on http://%s:%s%s", transport, host, port, endpoint
+    )
+
+    config = uvicorn.Config(
+        app,
+        host=host,
+        port=port,
+        log_level=mcp.settings.log_level.lower(),
+    )
+    asyncio.run(uvicorn.Server(config).serve())
+
+
 def main() -> None:
-    """Console-script entry point (stdio transport).
+    """Console-script entry point.
+
+    Two MCP transports are supported for talking to the MCP client:
+
+      * ``stdio`` (default) — the client spawns one process per session, so the
+        WebSocket bridge (and the Firefox extension connection) lives only as
+        long as that session.
+      * ``sse`` / ``streamable-http`` — run this once as an always-on HTTP
+        server; the client connects by URL. The bridge then stays alive across
+        client sessions, so the extension can stay connected continuously.
 
     Connection settings can be provided via CLI args (which take precedence) or
-    the FBMCP_* environment variables. The Firefox extension connects to this
-    bridge; use the extension popup toggle to enable/disable it.
+    the FBMCP_* environment variables. The Firefox extension connects to the
+    WebSocket bridge; use the extension popup toggle to enable/disable it.
     """
     import argparse
 
@@ -420,6 +482,17 @@ def main() -> None:
         description=(
             "MCP server that controls Firefox via a companion WebExtension "
             "over a local WebSocket bridge."
+        ),
+    )
+    parser.add_argument(
+        "--transport",
+        choices=["stdio", "sse", "streamable-http"],
+        default=os.environ.get("FBMCP_TRANSPORT", "stdio"),
+        help=(
+            "MCP transport to the client: 'stdio' (default; spawned per "
+            "session) or 'sse' / 'streamable-http' (run once as an always-on "
+            "HTTP server the client connects to by URL, keeping the browser "
+            "bridge alive across sessions). Env: $FBMCP_TRANSPORT."
         ),
     )
     parser.add_argument(
@@ -432,6 +505,23 @@ def main() -> None:
         type=int,
         default=int(os.environ.get("FBMCP_PORT", "9010")),
         help="WebSocket bridge port to bind (default: 9010 or $FBMCP_PORT).",
+    )
+    parser.add_argument(
+        "--http-host",
+        default=os.environ.get("FBMCP_HTTP_HOST", "127.0.0.1"),
+        help=(
+            "Host for the SSE/streamable-http MCP endpoint (default: 127.0.0.1 "
+            "or $FBMCP_HTTP_HOST). Only used with --transport sse/streamable-http."
+        ),
+    )
+    parser.add_argument(
+        "--http-port",
+        type=int,
+        default=int(os.environ.get("FBMCP_HTTP_PORT", "8000")),
+        help=(
+            "Port for the SSE/streamable-http MCP endpoint (default: 8000 or "
+            "$FBMCP_HTTP_PORT). Only used with --transport sse/streamable-http."
+        ),
     )
     parser.add_argument(
         "--log-level",
@@ -450,7 +540,10 @@ def main() -> None:
     bridge.port = args.port
     logger.info("Starting bridge on ws://%s:%s", bridge.host, bridge.port)
 
-    mcp.run()
+    if args.transport in ("sse", "streamable-http"):
+        _run_http(args.transport, args.http_host, args.http_port)
+    else:
+        mcp.run()
 
 
 if __name__ == "__main__":

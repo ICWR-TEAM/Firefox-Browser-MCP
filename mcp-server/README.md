@@ -31,14 +31,37 @@ uvx firefox-browser-mcp --version
 uvx firefox-browser-mcp --help
 ```
 
-| Flag          | Default     | Env fallback      |
-| ------------- | ----------- | ----------------- |
-| `--host`      | `127.0.0.1` | `FBMCP_HOST`      |
-| `--port`      | `9010`      | `FBMCP_PORT`      |
-| `--log-level` | `INFO`      | `FBMCP_LOG_LEVEL` |
+| Flag          | Default     | Env fallback       |
+| ------------- | ----------- | ------------------ |
+| `--transport` | `stdio`     | `FBMCP_TRANSPORT`  |
+| `--host`      | `127.0.0.1` | `FBMCP_HOST`       |
+| `--port`      | `9010`      | `FBMCP_PORT`       |
+| `--http-host` | `127.0.0.1` | `FBMCP_HTTP_HOST`  |
+| `--http-port` | `8000`      | `FBMCP_HTTP_PORT`  |
+| `--log-level` | `INFO`      | `FBMCP_LOG_LEVEL`  |
 
 The Firefox extension connects to this bridge; use the extension popup's
 **Enable/Disable** toggle to turn the connection on or off.
+
+### Transports (`--transport`)
+
+- `stdio` (default) — the MCP client spawns one process per session, so the
+  bridge lives only while a client session is open.
+- `sse` / `streamable-http` — run the server **once** as an always-on HTTP
+  service the client connects to by URL. The WebSocket bridge is tied to the
+  HTTP server's lifetime, so it stays up across client sessions and the
+  extension can stay connected continuously:
+
+  ```bash
+  uvx firefox-browser-mcp --transport sse --http-port 8000 --port 9010
+  # MCP endpoint:  http://127.0.0.1:8000/sse   (streamable-http -> /mcp)
+  ```
+
+  Configure the client with a URL instead of a command:
+
+  ```json
+  { "mcpServers": { "firefox-browser": { "url": "http://127.0.0.1:8000/sse" } } }
+  ```
 
 ## Configure your MCP client
 
@@ -69,8 +92,11 @@ Every tab has a stable numeric **`id`** (plus title and url). Get them with
 
 | Variable          | Default     | Description               |
 | ----------------- | ----------- | ------------------------- |
+| `FBMCP_TRANSPORT` | `stdio`     | MCP transport (stdio/sse/streamable-http) |
 | `FBMCP_HOST`      | `127.0.0.1` | WebSocket bridge host     |
 | `FBMCP_PORT`      | `9010`      | WebSocket bridge port     |
+| `FBMCP_HTTP_HOST` | `127.0.0.1` | SSE/HTTP MCP endpoint host |
+| `FBMCP_HTTP_PORT` | `8000`      | SSE/HTTP MCP endpoint port |
 | `FBMCP_LOG_LEVEL` | `INFO`      | Python logging level      |
 
 > If you change the port, update the bridge URL in the extension popup.
