@@ -3,9 +3,9 @@
 ---
 
 Project Start Date: 2026-07-30 (first working files; git history initialized 2026-07-30)
-Last Update Project: 2026-08-01
+Last Update Project: 2026-10-19
 Project Phase: Initial development — first release published
-Project Status: mcp-server published to PyPI (v0.2.0, adds SSE/streamable-http always-on transports); not yet formally tested end-to-end against a live browser
+Project Status: mcp-server published to PyPI (v0.2.1, patch re-release of 0.2.0 — SSE/streamable-http always-on transports); not yet formally tested end-to-end against a live browser
 
 ---
 
@@ -18,7 +18,7 @@ its network/API traffic.
 It consists of two independent, separately-versioned components:
 
 - `mcp-server/` — a Python [MCP](https://modelcontextprotocol.io) server
-  (version 0.2.0, **published on PyPI as `firefox-browser-mcp`**) that exposes
+  (version 0.2.1, **published on PyPI as `firefox-browser-mcp`**) that exposes
   browser tools over stdio (or an always-on SSE/streamable-http endpoint) and
   hosts a local WebSocket bridge. Runnable via `uvx firefox-browser-mcp`.
 - `firefox-extension/` — a Firefox WebExtension (Manifest V2, version 0.2.6, add-on display name "Browser MCP Bridge")
@@ -242,7 +242,7 @@ MCP response. Published PyPI 0.2.0.
 - Feature-complete MVP for both components; builds and syntax-checks pass
   (`uv build` succeeds; `twine check` PASSED; `py_compile` and `node --check`
   pass; manifest is valid).
-- Server v0.2.0 **published on PyPI** (`uvx firefox-browser-mcp` works; CLI
+- Server v0.2.1 **published on PyPI** (`uvx firefox-browser-mcp` works; CLI
   args `--transport/--host/--port/--http-host/--http-port/--log-level/--version`;
   `mcp<2` pin). stdio + always-on `sse`/`streamable-http` transports (bridge tied
   to the HTTP app lifespan; reference-counted start/stop). 24 `browser_*` tools
@@ -252,7 +252,7 @@ MCP response. Published PyPI 0.2.0.
   response bodies, console capture, and a popup showing connection status +
   configurable bridge URL.
 - Git history initialized and pushed to GitHub (ICWR-TEAM/Firefox-Browser-MCP).
-- Extension packaging ready for AMO: `web-ext lint` passes (0 errors, 3 warnings),
+- Extension packaging ready for AMO:
   `web-ext lint` passes with 0 errors / 0 warnings; `web-ext build` produces
   `firefox-extension/web-ext-artifacts/browser_mcp_bridge-0.2.6.zip`. Not yet
   submitted/signed on AMO.
@@ -291,4 +291,4 @@ Possible Solution: Add icons and sign/publish via AMO for a permanent install.
 ## Changelog Reference
 
 Daily history lives under `docs/changelog/[yyyy]/[mm]/[dd].md`.
-Latest: `docs/changelog/2026/08/01.md` (extension version bump to 0.2.6; web-ext lint 0/0; pushed to GitHub).
+Latest: `docs/changelog/2026/10/19.md` (server version bump to 0.2.1 and PyPI release; no code changes).
