@@ -3,9 +3,9 @@
 ---
 
 Project Start Date: 2026-07-30 (first working files; git history initialized 2026-07-30)
-Last Update Project: 2026-10-19
+Last Update Project: 2026-11-07
 Project Phase: Initial development — first release published
-Project Status: mcp-server published to PyPI (v0.2.1, patch re-release of 0.2.0 — SSE/streamable-http always-on transports); not yet formally tested end-to-end against a live browser
+Project Status: mcp-server published to PyPI (v0.2.2 — docs mention the new Chrome extension; same code as 0.2.1); not yet formally tested end-to-end against a live browser
 
 ---
 
@@ -18,7 +18,7 @@ its network/API traffic.
 It consists of two independent, separately-versioned components:
 
 - `mcp-server/` — a Python [MCP](https://modelcontextprotocol.io) server
-  (version 0.2.1, **published on PyPI as `firefox-browser-mcp`**) that exposes
+  (version 0.2.2, **published on PyPI as `firefox-browser-mcp`**) that exposes
   browser tools over stdio (or an always-on SSE/streamable-http endpoint) and
   hosts a local WebSocket bridge. Runnable via `uvx firefox-browser-mcp`.
 - `firefox-extension/` — a Firefox WebExtension (Manifest V2, version 0.2.6, add-on display name "Browser MCP Bridge")
@@ -237,12 +237,29 @@ shim). Verified: bridge listens at startup before any client connects, a WS
 client connects immediately, and streamable-http `initialize` returns a valid
 MCP response. Published PyPI 0.2.0.
 
+Date: 2026-11-07
+Decision: Add `chrome-extension/` as a third independent folder: Manifest V3
+port of the Firefox extension (same WebSocket bridge contract and command/action
+names; server unchanged). Differences: service worker with 20 s WS keepalive +
+`alarms` revive (Chrome 116+); response bodies captured by fetch/XHR hooks in
+`injected.js` (MAIN-world content script) instead of `filterResponseData`;
+`scripting.executeScript`; `sendResponse` messaging; `action` API.
+Reason: Chrome has no MV2 long-term support or `filterResponseData`.
+Impact: Chrome users can use the same server. Body capture is best-effort (only
+fetch/XHR after hook install). Must keep command names in sync across all
+extensions. No new server dependency.
+
 ## Current State
+
+- **Chrome extension added (2026-11-07):** `chrome-extension/` (MV3, v0.1.0) is a
+  port of `firefox-extension/` with the identical bridge protocol, command
+  router and popup. Syntax-checked only; NOT yet loaded in a live Chrome. See
+  the ADR below.
 
 - Feature-complete MVP for both components; builds and syntax-checks pass
   (`uv build` succeeds; `twine check` PASSED; `py_compile` and `node --check`
   pass; manifest is valid).
-- Server v0.2.1 **published on PyPI** (`uvx firefox-browser-mcp` works; CLI
+- Server v0.2.2 **published on PyPI** (`uvx firefox-browser-mcp` works; CLI
   args `--transport/--host/--port/--http-host/--http-port/--log-level/--version`;
   `mcp<2` pin). stdio + always-on `sse`/`streamable-http` transports (bridge tied
   to the HTTP app lifespan; reference-counted start/stop). 24 `browser_*` tools
@@ -291,4 +308,4 @@ Possible Solution: Add icons and sign/publish via AMO for a permanent install.
 ## Changelog Reference
 
 Daily history lives under `docs/changelog/[yyyy]/[mm]/[dd].md`.
-Latest: `docs/changelog/2026/10/19.md` (server version bump to 0.2.1 and PyPI release; no code changes).
+Latest: `docs/changelog/2026/11/07.md` (Chrome extension added; server version bump to 0.2.2 and PyPI release, no code changes).

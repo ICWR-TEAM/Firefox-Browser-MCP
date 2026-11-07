@@ -7,6 +7,7 @@ selectors, JavaScript, and its network/API traffic — from any MCP client
 ```
 mcp-server/         Python MCP server, published on PyPI as `firefox-browser-mcp`
 firefox-extension/  Firefox WebExtension (companion)
+chrome-extension/   Chrome (MV3) port of the same extension — see its README
 ```
 
 [![PyPI](https://img.shields.io/pypi/v/firefox-browser-mcp.svg)](https://pypi.org/project/firefox-browser-mcp/)

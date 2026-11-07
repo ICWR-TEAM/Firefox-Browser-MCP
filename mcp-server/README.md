@@ -2,7 +2,7 @@
 
 An [MCP](https://modelcontextprotocol.io) server that lets an LLM client drive a
 **real Firefox browser** — every tab, its DOM, arbitrary CSS selectors, and its
-network/API traffic. It talks to the companion `firefox-extension/`
+network/API traffic. It talks to the companion `firefox-extension/` (or `chrome-extension/`, Chrome MV3 port)
 WebExtension over a local WebSocket bridge.
 
 ```
